@@ -3,6 +3,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
+#! Para cargar los comandos del bot
 from load import load
 
 from dotenv import load_dotenv

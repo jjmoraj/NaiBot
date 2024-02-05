@@ -1,11 +1,13 @@
 import os
 
+#! Carga los comandos / cogs del bot
+
 
 async def load(bot):
     for filename in os.listdir('./cogs/commands'):
         if filename.endswith('.py'):
-            await bot.load_extension(f'cogs.{filename[:-3]}')
+            await bot.load_extension(f'cogs.commands.{filename[:-3]}')
 
     for filename in os.listdir('./cogs/events'):
         if filename.endswith('.py'):
-            await bot.load_extension(f'cogs.{filename[:-3]}')
+            await bot.load_extension(f'cogs.events.{filename[:-3]}')

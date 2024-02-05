@@ -1,5 +1,7 @@
 from discord.ext import commands
 
+""" //- EVENTS -// """
+
 
 class on_ready(commands.Cog):
     def __init__(self, bot):
@@ -16,7 +18,11 @@ class on_ready(commands.Cog):
             return
 
         print(
-            f"\033[34m\n 🧑 ► {message.author} ha dicho: {message.content}\n\033[39m")
+            f"\033[34m\n 🧑 ► {message.author} ha dicho: {message.content}\n\033[39m"
+        )
+
+
+""" //- SETUP -// """
 
 
 async def setup(bot):
