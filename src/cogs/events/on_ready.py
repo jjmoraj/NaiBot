@@ -17,6 +17,8 @@ class on_ready(commands.Cog):
         if message.author == self.bot.user:
             return
 
+        if message not in self.bot.cogs.items():
+            print("este comando no esta, por lo que deberia pasarle la respuesta al llm")
         print(
             f"\033[34m\n 🧑 ► {message.author} ha dicho: {message.content}\n\033[39m"
         )
