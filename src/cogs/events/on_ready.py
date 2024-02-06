@@ -1,4 +1,5 @@
 from discord.ext import commands
+from src.cogs.cogs_dict import get_cogs_dict
 
 """ //- EVENTS -// """
 
@@ -16,9 +17,6 @@ class on_ready(commands.Cog):
         # Verificar que el mensaje no sea del propio bot
         if message.author == self.bot.user:
             return
-
-        if message not in self.bot.cogs.items():
-            print("este comando no esta, por lo que deberia pasarle la respuesta al llm")
         print(
             f"\033[34m\n 🧑 ► {message.author} ha dicho: {message.content}\n\033[39m"
         )

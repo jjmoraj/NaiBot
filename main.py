@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 #! Para cargar los comandos del bot
-from src.cogs.cogsList import cogsList
+from src.cogs.cogs_dict import get_cogs_dict
 from load import load
 
 from dotenv import load_dotenv
@@ -15,8 +15,8 @@ async def main(bot, token):
     await load(bot=bot)
 
     #! Lista de cogs para la comprobación por lenguaje natural
-    cogs_list = await cogsList(bot=bot)
-    print(cogs_list)
+    cogs_dict = await get_cogs_dict(bot=bot)
+    print(cogs_dict)
 
     await bot.start(token=token)
 
