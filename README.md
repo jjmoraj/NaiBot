@@ -49,3 +49,29 @@ Los eventos, también conocidos como listeners, son funciones que el bot ejecuta
 async def on_member_join(self, member):
     await member.guild.system_channel.send(f'¡Bienvenido {member.mention}!')
 ```
+
+# Propiedades de los comandos
+
+En la biblioteca discord.py, los comandos tienen varias propiedades y métodos que puedes utilizar para obtener información y realizar diversas acciones. Algunas de las propiedades más comunes de los comandos incluyen:
+
+1. **`name`**: El nombre del comando.
+
+2. **`aliases`**: Una lista de alias (otros nombres) que pueden usarse para invocar el comando.
+
+3. **`brief`**: Una breve descripción del comando, utilizada para proporcionar información concisa sobre el comando.
+
+4. **`help`**: La ayuda detallada del comando, que proporciona información más extensa sobre su uso.
+
+5. **`usage`**: Una cadena que representa cómo se debe usar el comando, incluyendo los argumentos.
+
+6. **`enabled`**: Indica si el comando está habilitado o deshabilitado.
+
+7. **`hidden`**: Indica si el comando debe estar oculto en la ayuda.
+
+8. **`cog`**: La instancia del cog al que pertenece el comando.
+
+9. **`cooldown`**: La configuración de cooldown para el comando.
+
+10. **`parent`**: En el caso de subcomandos, representa el comando principal al que están subordinados.
+
+Estas son solo algunas de las propiedades más comunes. Puedes explorar la documentación oficial de discord.py para obtener información detallada sobre las propiedades y métodos de los comandos: [discord.py - Comandos](https://discordpy.readthedocs.io/en/latest/ext/commands/api.html#discord.ext.commands.Command)
