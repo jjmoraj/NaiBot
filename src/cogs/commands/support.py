@@ -48,7 +48,7 @@ class support(commands.Cog):
         help='Un comando para ver los COGS cargados de NAI',
         brief='Un comando para ver los COGS cargados de NAI'
     )
-    async def listcogs(self, ctx):
+    async def listcogs(self, message):
         """Lists all loaded cogs and their commands"""
         embed = Embed(
             title="Cogs cargados",
@@ -60,7 +60,7 @@ class support(commands.Cog):
             commands_str = ', '.join(
                 commands) if commands else 'No hay comandos en este cog.'
             embed.add_field(name=cog_name, value=commands_str, inline=False)
-        await ctx.reply(embed=embed)
+        await message.reply(embed=embed)
 
 
 """ //- SETUP -// """
