@@ -1,19 +1,19 @@
 class NaiClassificationAgent():
-    def __init__(self,cogs_dict):
-        self.name='ClassifyUserMessage'
-        self.cogs_dict=cogs_dict
+    def __init__(self, cogs_dict):
+        self.name = 'ClassifyUserMessage'
+        self.cogs_dict = cogs_dict
         self.normal_functions = {
-            "normal_response" : "Reply with 'normal_response' if the user wants a generic response that does not require an internet search and is not current" ,
-            "internet_response" : "Reply with 'internet_response', if the user wants a response that requires an internet search and that requires current and updated data",
+            "normal_response": "Reply with 'normal_response' if the user wants a generic response that does not require an internet search and is not current",
+            "internet_response": "Reply with 'internet_response', if the user wants a response that requires an internet search and that requires current and updated data",
             "bot_information": "Reply with 'bot_information', if the user wants information about this bot, such as who are its creators, what is its website, etc. "
-            }
+        }
 
         self.bot_functions = {
             **self.cogs_dict,
             **self.normal_functions
         }
-            
-        self.description=f"""
+
+        self.description = f"""
 
             Your function right now is to classify the type of response the user should receive.
 

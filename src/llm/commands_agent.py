@@ -1,10 +1,11 @@
 from src.cogs.cogs_dict import get_cogs_dict
 
+
 class NaiCommandsAgent():
     def __ini__(self):
-        self.name='CommandFilter'
+        self.name = 'CommandFilter'
         self.cogs_dict = str(get_cogs_dict())
-        self.description=f'''
+        self.description = f'''
         
             Tool to identify the type of command the user wants to make by natural language.
             Returns a specific command according to the commands that will be provided.
