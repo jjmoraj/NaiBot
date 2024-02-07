@@ -2,7 +2,6 @@ from discord.ext import commands
 from src.cogs.cogs_dict import get_cogs_dict
 from src.llm.classification_agent import NaiClassificationAgent
 from src.llm.model import NaiModel
-from langchain_core.messages import SystemMessage, HumanMessage
 import json
 
 from  src.cogs.commands.basics import basics
@@ -19,25 +18,19 @@ class ErrorHandler(commands.Cog):
         if isinstance(error, commands.errors.CommandNotFound):
 
             message = ctx.message
+
+            if message.author == self.bot.user:
+                return
+
             nai_model = NaiModel()
+
             classification_agent = NaiClassificationAgent(cogs_dict=cogs_dict)
-            prompt_messages = [
-                SystemMessage(content=classification_agent.description),
-                HumanMessage(content=str(message.content[1:])),
-            ]
-            llm = nai_model.get_model()
-            llm_response = llm.invoke(prompt_messages)
-            llm_response = {
-                'response_type': 'normal_response'} if None else llm_response
+            
+            clasificated_message = await classification_agent.get_classicated_message(message=message,model=nai_model)
 
-            llm_response = str(llm_response.content).replace(
-                "\\", "").replace('\'', '"')
-            llm_response = json.loads(llm_response)
+           
+            message.content = f"!{clasificated_message['response_type']}"
 
-            llm_response['response_type'] = llm_response['response_type'] if llm_response['response_type'] in list(
-                classification_agent.bot_functions.keys()) else 'normal_response'
-
-            message.content = f"!{llm_response['response_type']}"
 
             await self.bot.process_commands(message)
 
