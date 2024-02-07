@@ -54,24 +54,27 @@ class NaiClassificationAgent():
             """
 
     async def get_classicated_message(self,message,model):
+        try:
+            prompt_messages = [
+                SystemMessage(content=self.description),
+                HumanMessage(content=str(message.content[1:])),
+            ]
+            llm = model.get_model()
+            llm_response = llm.invoke(prompt_messages)
+            llm_response = {
+                    'response_type': 'normal_response'} if None else llm_response
 
-        prompt_messages = [
-            SystemMessage(content=self.description),
-            HumanMessage(content=str(message.content[1:])),
-        ]
-        llm = model.get_model()
-        llm_response = llm.invoke(prompt_messages)
-        llm_response = {
-                'response_type': 'normal_response'} if None else llm_response
+            llm_response = str(llm_response.content).replace(
+                    "\\", "").replace('\'', '"')
+            llm_response = json.loads(llm_response)
 
-        llm_response = str(llm_response.content).replace(
-                "\\", "").replace('\'', '"')
-        llm_response = json.loads(llm_response)
+            llm_response['response_type'] = llm_response['response_type'] if llm_response['response_type'] in list(
+                    self.bot_functions.keys()) else 'normal_response'
 
-        llm_response['response_type'] = llm_response['response_type'] if llm_response['response_type'] in list(
-                self.bot_functions.keys()) else 'normal_response'
-
-        return llm_response
+            return llm_response
+        except Exception as e:
+            print(e)
+            return { 'response_type': 'normal_response'}
 
     
 
