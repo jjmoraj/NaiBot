@@ -13,19 +13,21 @@ class NaiModel():
         self.langfuse_sk= os.getenv('LANGFUSE_SECRET_KEY')
         self.langfuse_pk= os.getenv('LANGFUSE_PUBLIC_KEY')
         self.model_name = 'mistralai/Mixtral-8x7B-Instruct-v0.1'
-        self.model_url='https://api.together.xyz'
+        self.base_url='https://api.together.xyz'
         self.temperature = temperature
         self.streaming = streaming
         self.langfuse_callbak = CallbackHandler(self.langfuse_pk, self.langfuse_sk)
 
-    def get_llm(self):
+    def get_model(self):
 
-        return ChatOpenAI(
-            api_key=self.together_token,
-            base_url=self.model_url,
-            model=self.tiktoken_model_name,
-            callbacks=[self.langfuse_callbak],
-            temperature=self.temperature,
-            streaming=self.streaming,
+        model =  ChatOpenAI(
+        base_url=self.base_url,
+        model = self.model_name,
+        api_key=self.together_token,
+        streaming = self.streaming,
+        temperature=self.temperature,
+        callbacks=[self.langfuse_callbak]
         )
+
+        return model
     

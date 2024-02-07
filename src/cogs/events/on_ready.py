@@ -1,5 +1,4 @@
 from discord.ext import commands
-from src.cogs.cogs_dict import get_cogs_dict
 
 """ //- EVENTS -// """
 
@@ -7,6 +6,7 @@ from src.cogs.cogs_dict import get_cogs_dict
 class on_ready(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        #self.command_agent
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -14,12 +14,16 @@ class on_ready(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        # Verificar que el mensaje no sea del propio bot
-        if message.author == self.bot.user:
-            return
-        print(
-            f"\033[34m\n 🧑 ► {message.author} ha dicho: {message.content}\n\033[39m"
-        )
+
+            # Verificar que el mensaje no sea del propio bot
+            if message.author == self.bot.user:
+                return
+
+            print(
+                f"\033[34m\n 🧑 ► {message.author} ha dicho: {message.content}\n\033[39m"
+            )
+            
+                
 
 
 """ //- SETUP -// """
