@@ -75,3 +75,5 @@ En la biblioteca discord.py, los comandos tienen varias propiedades y métodos q
 10. **`parent`**: En el caso de subcomandos, representa el comando principal al que están subordinados.
 
 Estas son solo algunas de las propiedades más comunes. Puedes explorar la documentación oficial de discord.py para obtener información detallada sobre las propiedades y métodos de los comandos: [discord.py - Comandos](https://discordpy.readthedocs.io/en/latest/ext/commands/api.html#discord.ext.commands.Command)
+# NaiBot
+# NaiBot
