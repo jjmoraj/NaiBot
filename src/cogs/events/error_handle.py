@@ -5,6 +5,7 @@ from src.llm.model import NaiModel
 from langchain_core.messages import SystemMessage, HumanMessage
 import json
 
+from  src.cogs.commands.basics import basics
 
 class ErrorHandler(commands.Cog):
     def __init__(self, bot):
@@ -36,7 +37,10 @@ class ErrorHandler(commands.Cog):
             llm_response['response_type'] = llm_response['response_type'] if llm_response['response_type'] in list(
                 classification_agent.bot_functions.keys()) else 'normal_response'
 
-            await message.reply(llm_response['response_type'])
+            message.content = f"!{llm_response['response_type']}"
+
+            await self.bot.process_commands(message)
+
 
         elif isinstance(error, commands.MissingRequiredArgument):
             await message.send('Falta un argumento requerido.')

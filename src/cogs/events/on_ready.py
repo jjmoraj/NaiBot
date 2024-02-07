@@ -6,7 +6,7 @@ from discord.ext import commands
 class on_ready(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # self.command_agent
+        #self.command_agent
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -15,13 +15,14 @@ class on_ready(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
 
-        # Verificar que el mensaje no sea del propio bot
-        if message.author == self.bot.user:
-            return
+            # Verificar que el mensaje no sea del propio bot
+            if message.author == self.bot.user:
+                return
 
-        print(
-            f"\033[34m\n 🧑 ► {message.author} ha dicho: {message.content}\n\033[39m"
-        )
+            print(
+                f"\033[34m\n 🧑 ► {message.author} ha dicho: {message.content}\n\033[39m"
+            )           
+                
 
 
 """ //- SETUP -// """
