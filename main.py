@@ -1,12 +1,12 @@
+from dotenv import load_dotenv
+from load import load
 import os
 import asyncio
 import discord
 from discord.ext import commands
 
 #! Para cargar los comandos del bot
-from load import load
 
-from dotenv import load_dotenv
 load_dotenv()
 
 
@@ -18,6 +18,7 @@ async def main(bot, token):
 class NAI(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all()
+        intents.voice_states = True
         intents.message_content = True
         intents.members = True
         token = os.getenv('BOT_TOKEN')
