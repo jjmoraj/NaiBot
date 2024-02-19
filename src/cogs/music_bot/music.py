@@ -1,12 +1,14 @@
+import re
+import os
+import json
 import discord
-from discord.ui import Select, Button
 from discord.ext import commands
 import asyncio
 from asyncio import run_coroutine_threadsafe
 from urllib import parse, request
-import re
-import json
 from youtube_dl import YoutubeDL
+from dotenv import load_dotenv
+load_dotenv()
 
 
 class music_bot(commands.Cog):
@@ -23,7 +25,7 @@ class music_bot(commands.Cog):
             'nonplaylist': 'True'
         }
         self.FFMPEG_OPTIONS = {
-            'ffmpeg': 'nacl',
+            'ffmpeg': os.getenv('FFMPEG_EXE'),
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
 
         self.embedBlue = 0x2c76dd
@@ -60,7 +62,7 @@ class music_bot(commands.Cog):
         avatar = author.avatar
 
         embed = discord.Embed(
-            title="Ahora está sondando",
+            title="Ahora está sonando",
             description=f'[{title}]({link})',
             colour=self.embedBlue,
         )
@@ -163,17 +165,14 @@ class music_bot(commands.Cog):
             except:
                 pass
 
-            source = discord.FFmpegOpusAudio.from_probe(
-                song['source'], **self.FFMPEG_OPTIONS)
-            self.vc[id].play(discord.AudioSource.read(source),
-                             after=lambda e: self.play_next(ctx))
+            self.vc[id].play(discord.FFmpegPCMAudio(
+                source=song['source'], executable=self.FFMPEG_OPTIONS['ffmpeg']), after=lambda e: self.play_next(ctx))
         else:
             self.queueIndex[id] += 1
             self.is_playing[id] = False
 
     async def play_music(self, ctx):
         id = int(ctx.guild.id)
-
         if self.queueIndex[id] < len(self.musicQueue[id]):
             self.is_playing[id] = True
             self.is_paused[id] = False
@@ -184,12 +183,10 @@ class music_bot(commands.Cog):
             message = self.now_playing_embed(ctx, song)
             await ctx.send(embed=message)
 
-            source = discord.FFmpegOpusAudio.from_probe(
-                song['source'], **self.FFMPEG_OPTIONS)
-            self.vc[id].play(discord.AudioSource.read(source),
-                             after=lambda e: self.play_next(ctx))
+            self.vc[id].play(discord.FFmpegPCMAudio(
+                source=song['source'], executable=self.FFMPEG_OPTIONS['ffmpeg']), after=lambda e: self.play_next(ctx))
         else:
-            await ctx.send("No hay canciones en la lista")
+            await ctx.send("No hay canciones en la lista.")
             self.queueIndex[id] += 1
             self.is_playing[id] = False
 
@@ -320,8 +317,8 @@ class music_bot(commands.Cog):
             embedText += f"{i+1} - [{name}]({url})\n"
 
         for i, title in enumerate(songNames):
-            selectionOptions.append(Select.add_option(
-                label=f"{i+1} - {title[:95]}", value=i))
+            selectionOptions.append(discord.SelectOption(
+                self=self, label=f"{i+1} - {title[:95]}", value=i))
 
         searchResults = discord.Embed(
             title="Search Results",
@@ -329,11 +326,11 @@ class music_bot(commands.Cog):
             colour=self.embedRed
         )
         selectionComponents = [
-            Select(
+            discord.SelectOption(
                 placeholder="Selecciona una opción",
                 options=selectionOptions
             ),
-            Button(
+            discord.Button(
                 label="Cancelar",
                 custom_id="Cancel",
                 style=4
