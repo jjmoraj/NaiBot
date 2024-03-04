@@ -18,8 +18,10 @@ async def main(bot, token):
 class NAI(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all()
-        intents.voice_states = True
         intents.message_content = True
+        intents.voice_states = True
+        intents.integrations = True
+        intents.invites = True
         intents.members = True
         token = os.getenv('BOT_TOKEN')
 

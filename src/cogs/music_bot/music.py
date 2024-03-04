@@ -3,12 +3,58 @@ import os
 import json
 import discord
 from discord.ext import commands
+from discord.ui import View, Button, Select
+from discord.components import SelectOption
 import asyncio
 from asyncio import run_coroutine_threadsafe
 from urllib import parse, request
 from youtube_dl import YoutubeDL
 from dotenv import load_dotenv
 load_dotenv()
+
+
+class Counter(View):
+    @discord.ui.button(label='0', style=discord.ButtonStyle.red)
+    async def counter(self, interaction: discord.Interaction, button: discord.ui.Button):
+        number = int(button.label)
+        button.label = str(number + 1)
+        if number + 1 >= 5:
+            button.style = discord.ButtonStyle.green
+
+        await interaction.message.edit(view=self)
+        await interaction.response.defer()
+        self.stop()
+
+
+class SearchView(View):
+    def __init__(self, ctx, song_names, options):
+        super().__init__()
+
+        self.ctx = ctx
+        self.song_names = song_names
+        self.options = options
+
+        # Agregar un elemento de selección con las opciones proporcionadas
+        self.select_menu = Select(
+            options=self.options, custom_id="SelectSearch")
+        self.add_item(self.select_menu)
+
+        # Agregar un botón de cancelación
+        self.add_item(Button(label="Cancelar", custom_id="Cancel",
+                      style=discord.ButtonStyle.danger))
+
+    async def on_select(self, interaction: discord.Interaction):
+        if interaction.custom_id == "SelectSearch":
+            selected_value = interaction.data['values'][0]
+            await interaction.message.edit(f"Seleccionaste la opción: {selected_value}")
+            await interaction.response.defer()
+            self.stop()
+
+    async def on_button_click(self, interaction: discord.Interaction):
+        if interaction.custom_id == "Cancel":
+            await interaction.message.edit("Comando cancelado.")
+            await interaction.response.defer()
+            self.stop()
 
 
 class music_bot(commands.Cog):
@@ -111,7 +157,7 @@ class music_bot(commands.Cog):
             self.vc[id] = await channel.connect()
 
             if self.vc[id] == None:
-                await ctx.send("No se ha podido conectar al canal de voz")
+                await ctx.reply("No se ha podido conectar al canal de voz")
                 return
         else:
             await self.vc[id].move_to(channel)
@@ -158,7 +204,7 @@ class music_bot(commands.Cog):
 
             song = self.musicQueue[id][self.queueIndex[id]][0]
             message = self.now_playing_embed(ctx, song)
-            coro = ctx.send(embed=message)
+            coro = ctx.reply(embed=message)
             fut = run_coroutine_threadsafe(coro, self.bot.loop)
             try:
                 fut.result()
@@ -181,12 +227,12 @@ class music_bot(commands.Cog):
 
             song = self.musicQueue[id][self.queueIndex[id]][0]
             message = self.now_playing_embed(ctx, song)
-            await ctx.send(embed=message)
+            await ctx.reply(embed=message)
 
             self.vc[id].play(discord.FFmpegPCMAudio(
                 source=song['source'], executable=self.FFMPEG_OPTIONS['ffmpeg']), after=lambda e: self.play_next(ctx))
         else:
-            await ctx.send("No hay canciones en la lista.")
+            await ctx.reply("No hay canciones en la lista.")
             self.queueIndex[id] += 1
             self.is_playing[id] = False
 
@@ -203,11 +249,11 @@ class music_bot(commands.Cog):
         try:
             userChannel = ctx.message.author.voice.channel
         except:
-            await ctx.send("NAI no te ve en ningún canal de voz, entra en uno")
+            await ctx.reply("NAI no te ve en ningún canal de voz, entra en uno")
             return
         if not args:
             if len(self.musicQueue[id]) == 0:
-                await ctx.send("No hay canciones en la lista")
+                await ctx.reply("No hay canciones en la lista")
                 return
             elif not self.is_playing[id]:
                 if self.musicQueue[id] == None or self.vc[id] == None:
@@ -221,7 +267,7 @@ class music_bot(commands.Cog):
         else:
             song = self.extract_YT(self.search_YT(search)[0])
             if type(song) == type(True):
-                await ctx.send("No se ha podido encontrar la canción, pruebe con otra diferente")
+                await ctx.reply("No se ha podido encontrar la canción, pruebe con otra diferente")
             else:
                 self.musicQueue[id].append([song, userChannel])
 
@@ -229,7 +275,7 @@ class music_bot(commands.Cog):
                     await self.play_music(ctx)
                 else:
                     message = self.added_song_embed(ctx, song)
-                    await ctx.send(embed=message)
+                    await ctx.reply(embed=message)
 
     @commands.command(
         name="add",
@@ -243,19 +289,19 @@ class music_bot(commands.Cog):
         try:
             userChannel = ctx.message.author.voice.channel
         except:
-            await ctx.send("Debes estar dentro de un canal de voz")
+            await ctx.reply("Debes estar dentro de un canal de voz")
             return
         if not args:
-            await ctx.send("Necesitas especificar una canción para agregar a la lista")
+            await ctx.reply("Necesitas especificar una canción para agregar a la lista")
         else:
             song = self.extract_YT(self.search_YT(search)[0])
             if type(song) == type(False):
-                await ctx.send("No se ha podido encontrar la canción, pruebe con otra diferente")
+                await ctx.reply("No se ha podido encontrar la canción, pruebe con otra diferente")
                 return
             else:
                 self.musicQueue[ctx.guild.id].append([song, userChannel])
                 message = self.added_song_embed(ctx, song)
-                await ctx.send(embed=message)
+                await ctx.reply(embed=message)
 
     @commands.command(
         name="remove",
@@ -269,9 +315,9 @@ class music_bot(commands.Cog):
         if self.musicQueue[id] != []:
             song = self.musicQueue[id][-1][0]
             removeSongEmbed = self.removed_song_embed(ctx, song)
-            await ctx.send(embed=removeSongEmbed)
+            await ctx.reply(embed=removeSongEmbed)
         else:
-            await ctx.send("No hay canciones en la lista")
+            await ctx.reply("No hay canciones en la lista")
         self.musicQueue[id] = self.musicQueue[id][:-1]
         if self.musicQueue[id] == []:
             if self.vc[id] != None and self.is_playing[id]:
@@ -298,102 +344,110 @@ class music_bot(commands.Cog):
         embedText = ""
 
         if not args:
-            await ctx.send("Debe especificar la búsqueda para utilizar este comando")
+            await ctx.reply("Debe especificar la búsqueda para utilizar este comando")
             return
         try:
             userChannel = ctx.message.author.voice.channel
         except:
-            await ctx.send("You must be connected to a voice channel.")
+            await ctx.reply("Debes estar conectado a un canal para ejecutar este comando")
             return
 
-        await ctx.send("Buscando resultados . . .")
+        await ctx.reply("Buscando resultados . . .")
 
         songTokens = self.search_YT(search)
 
+        if not songTokens:
+            await ctx.reply("No se encontraron resultados para la búsqueda.")
+            return
+
+        unique_tokens = set()
+        songNames = []
+        selectionOptions = []
+        embedText = ""
+
         for i, token in enumerate(songTokens):
-            url = 'https://www.youtube.com/watch?v=' + token
+            if token in unique_tokens:
+                continue
+
+            unique_tokens.add(token)
+            url = f'https://www.youtube.com/watch?v={token}'
             name = self.get_YT_title(token)
             songNames.append(name)
-            embedText += f"{i+1} - [{name}]({url})\n"
-
-        for i, title in enumerate(songNames):
-            selectionOptions.append(discord.SelectOption(
-                self=self, label=f"{i+1} - {title[:95]}", value=i))
+            embedText += f"{len(unique_tokens)} - [{name}]({url})\n"
+            selectionOptions.append(SelectOption(
+                label=f"{len(unique_tokens)} - {name[:95]}", value=len(unique_tokens) - 1))
 
         searchResults = discord.Embed(
-            title="Search Results",
+            title="Resultados de la búsqueda",
             description=embedText,
             colour=self.embedRed
         )
-        selectionComponents = [
-            discord.SelectOption(
-                placeholder="Selecciona una opción",
-                options=selectionOptions
-            ),
-            discord.Button(
-                label="Cancelar",
-                custom_id="Cancel",
-                style=4
-            )
-        ]
-        message = await ctx.send(embed=searchResults, components=selectionComponents)
-        try:
-            tasks = [
-                asyncio.create_task(self.bot.wait_for(
-                    "button_click",
-                    timeout=60.0,
-                    check=None
-                ), name="button"),
-                asyncio.create_task(self.bot.wait_for(
-                    "select_option",
-                    timeout=60.0,
-                    check=None
-                ), name="select")
-            ]
-            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-            finished = list(done)[0]
 
-            for task in pending:
-                try:
-                    task.cancel()
-                except asyncio.CancelledError:
-                    pass
+        # view = SearchView(ctx, song_names=songNames, options=selectionOptions)
 
-            if finished == None:
-                searchResults.title = "Búsqueda Fallida"
-                searchResults.description = ""
-                await message.delete()
-                await ctx.send(embed=searchResults)
-                return
+        view = Counter()
 
-            action = finished.get_name()
+        message = await ctx.reply(embed=searchResults, view=view)
 
-            if action == "button":
-                searchResults.title = "Búsqueda Fallida"
-                searchResults.description = ""
-                await message.delete()
-                await ctx.send(embed=searchResults)
-            elif action == "select":
-                result = finished.result()
-                chosenIndex = int(result.values[0])
-                songRef = self.extract_YT(songTokens[chosenIndex])
-                if type(songRef) == type(True):
-                    await ctx.send("No se pudo descargar la canción. Formato incorrecto, pruebe con otras palabras clave")
-                    return
-                embedResponse = discord.Embed(
-                    title=f"Opción #{chosenIndex + 1} Seleccionada",
-                    description=f"¡[{songRef['title']}]({songRef['link']}) Añadida a la lista!",
-                    colour=self.embedRed
-                )
-                embedResponse.set_thumbnail(url=songRef['thumbnail'])
-                await message.delete()
-                await ctx.send(embed=embedResponse)
-                self.musicQueue[ctx.guild.id].append([songRef, userChannel])
-        except:
-            searchResults.title = "Búsqueda Fallida"
-            searchResults.description = ""
-            await message.delete()
-            await ctx.send(embed=searchResults)
+        await view.wait()
+
+        # try:
+        #     tasks = [
+        #         asyncio.create_task(self.bot.wait_for(
+        #             "button_click",
+        #             timeout=60.0,
+        #             check=None,
+        #         ), name="Cancelar"),
+        #         asyncio.create_task(self.bot.wait_for(
+        #             "select_option",
+        #             timeout=60.0,
+        #             check=None
+        #         ), name="SelectSearch")
+        #     ]
+        #     done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+        #     finished = list(done)[0]
+
+        #     for task in pending:
+        #         try:
+        #             task.cancel()
+        #         except asyncio.CancelledError:
+        #             pass
+
+        #     if finished == None:
+        #         searchResults.title = "Búsqueda Fallida"
+        #         searchResults.description = ""
+        #         await message.delete()
+        #         await ctx.reply(embed=searchResults)
+        #         return
+
+        #     action = finished.get_name()
+
+        #     if action == "button":
+        #         searchResults.title = "Búsqueda Fallida"
+        #         searchResults.description = ""
+        #         await message.delete()
+        #         await ctx.reply(embed=searchResults)
+        #     elif action == "select":
+        #         result = finished.result()
+        #         chosenIndex = int(result.values[0])
+        #         songRef = self.extract_YT(songTokens[chosenIndex])
+        #         if type(songRef) == type(True):
+        #             await ctx.reply("No se pudo descargar la canción. Formato incorrecto, pruebe con otras palabras clave")
+        #             return
+        #         embedResponse = discord.Embed(
+        #             title=f"Opción #{chosenIndex + 1} Seleccionada",
+        #             description=f"¡[{songRef['title']}]({songRef['link']}) Añadida a la lista!",
+        #             colour=self.embedRed
+        #         )
+        #         embedResponse.set_thumbnail(url=songRef['thumbnail'])
+        #         await message.delete()
+        #         await ctx.reply(embed=embedResponse)
+        #         self.musicQueue[ctx.guild.id].append([songRef, userChannel])
+        # except:
+        #     searchResults.title = "Búsqueda Fallida"
+        #     searchResults.description = ""
+        #     await message.delete()
+        #     await ctx.reply(embed=searchResults)
 
     @commands.command(
         name="pause",
@@ -405,9 +459,9 @@ class music_bot(commands.Cog):
     async def pause(self, ctx):
         id = int(ctx.guild.id)
         if not self.vc[id]:
-            await ctx.send("No esta sonando nada en este momento.")
+            await ctx.reply("No esta sonando nada en este momento.")
         elif self.is_playing[id]:
-            await ctx.send("¡Canción en pausa!")
+            await ctx.reply("¡Canción en pausa!")
             self.is_playing[id] = False
             self.is_paused[id] = True
             self.vc[id].pause()
@@ -422,9 +476,9 @@ class music_bot(commands.Cog):
     async def resume(self, ctx):
         id = int(ctx.guild.id)
         if not self.vc[id]:
-            await ctx.send("No hay nada para continuar en este momento")
+            await ctx.reply("No hay nada para continuar en este momento")
         elif self.is_paused[id]:
-            await ctx.send("¡La canción está sonando!")
+            await ctx.reply("¡La canción está sonando!")
             self.is_playing[id] = True
             self.is_paused[id] = False
             self.vc[id].resume()
@@ -439,9 +493,9 @@ class music_bot(commands.Cog):
     async def previous(self, ctx):
         id = int(ctx.guild.id)
         if self.vc[id] == None:
-            await ctx.send("Necesitas estar dentro de un canal de voz para usar este comando")
+            await ctx.reply("Necesitas estar dentro de un canal de voz para usar este comando")
         elif self.queueIndex[id] <= 0:
-            await ctx.send("En esta lista no hay canciones anteriores")
+            await ctx.reply("En esta lista no hay canciones anteriores")
             self.vc[id].pause()
             await self.play_music(ctx)
         elif self.vc[id] != None and self.vc[id]:
@@ -459,9 +513,9 @@ class music_bot(commands.Cog):
     async def skip(self, ctx):
         id = int(ctx.guild.id)
         if self.vc[id] == None:
-            await ctx.send("Necesitas estar dentro de un canal de voz para usar este comando")
+            await ctx.reply("Necesitas estar dentro de un canal de voz para usar este comando")
         elif self.queueIndex[id] >= len(self.musicQueue[id]) - 1:
-            await ctx.send("No hay canciones siguientes. Volviendo a reproducir la canción")
+            await ctx.reply("No hay canciones siguientes. Volviendo a reproducir la canción")
             self.vc[id].pause()
             await self.play_music(ctx)
         elif self.vc[id] != None and self.vc[id]:
@@ -480,7 +534,7 @@ class music_bot(commands.Cog):
         id = int(ctx.guild.id)
         returnValue = ""
         if self.musicQueue[id] == []:
-            await ctx.send("No hay canciones en la lista")
+            await ctx.reply("No hay canciones en la lista")
             return
 
         for i in range(self.queueIndex[id], len(self.musicQueue[id])):
@@ -495,7 +549,7 @@ class music_bot(commands.Cog):
             returnValue += f"{returnIndex} - [{self.musicQueue[id][i][0]['title']}]({self.musicQueue[id][i][0]['link']})\n"
 
             if returnValue == "":
-                await ctx.send("No hay canciones en la lista")
+                await ctx.reply("No hay canciones en la lista")
                 return
 
         queue = discord.Embed(
@@ -503,7 +557,7 @@ class music_bot(commands.Cog):
             description=returnValue,
             colour=self.embedGreen
         )
-        await ctx.send(embed=queue)
+        await ctx.reply(embed=queue)
 
     @commands.command(
         name="clear",
@@ -518,7 +572,7 @@ class music_bot(commands.Cog):
             self.is_playing = self.is_paused = False
             self.vc[id].stop()
         if self.musicQueue[id] != []:
-            await ctx.send("La lista está vacía")
+            await ctx.reply("La lista está vacía")
             self.musicQueue[id] = []
         self.queueIndex = 0
 
@@ -536,9 +590,9 @@ class music_bot(commands.Cog):
         if ctx.message.author.voice:
             userChannel = ctx.message.author.voice.channel
             await self.join_VC(ctx, userChannel)
-            await ctx.send(f'NAI se ha unido {userChannel}')
+            await ctx.reply(f'NAI se ha unido {userChannel}')
         else:
-            await ctx.send("Necesitas estar conectado a un canal de voz")
+            await ctx.reply("Necesitas estar conectado a un canal de voz")
 
     @commands.command(
         name="leave",
@@ -553,7 +607,7 @@ class music_bot(commands.Cog):
         self.musicQueue[id] = []
         self.queueIndex[id] = 0
         if self.vc[id] != None:
-            await ctx.send("NAI se fue del chat")
+            await ctx.reply("NAI se fue del chat")
             await self.vc[id].disconnect()
             self.vc[id] = None
 
