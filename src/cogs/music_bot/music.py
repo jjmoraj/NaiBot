@@ -70,7 +70,8 @@ class music_bot(commands.Cog):
             'nonplaylist': 'True'
         }
         self.FFMPEG_OPTIONS = {
-            'ffmpeg': 'ffmpeg',
+            # 'ffmpeg': 'ffmpeg',              #! Linux
+            'ffmpeg': os.getenv('FFMPEG_EXE'), #? Windows
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
 
         self.embedBlue = 0x2c76dd
@@ -515,7 +516,7 @@ class music_bot(commands.Cog):
                 await ctx.reply("No hay canciones en la lista")
                 return
 
-             = discord.Embed(
+            queue = discord.Embed(
             title="Current Queue",
             description=returnValue,
             colour=self.embedGreen
