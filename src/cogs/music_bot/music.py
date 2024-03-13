@@ -12,20 +12,6 @@ from youtube_dl import YoutubeDL
 from dotenv import load_dotenv
 load_dotenv()
 
-
-class Counter(View):
-    @discord.ui.button(label='0', style=discord.ButtonStyle.red)
-    async def counter(self, interaction: discord.Interaction, button: discord.ui.Button):
-        number = int(button.label)
-        button.label = str(number + 1)
-        if number + 1 >= 5:
-            button.style = discord.ButtonStyle.green
-
-        await interaction.message.edit(view=self)
-        await interaction.response.defer()
-        self.stop()
-
-
 class SearchView(View):
     def __init__(self, ctx, song_names, options):
         super().__init__()
@@ -34,27 +20,40 @@ class SearchView(View):
         self.song_names = song_names
         self.options = options
 
+        self.selected_value = 1
+
         # Agregar un elemento de selección con las opciones proporcionadas
         self.select_menu = Select(
             options=self.options, custom_id="SelectSearch")
         self.add_item(self.select_menu)
 
         # Agregar un botón de cancelación
-        self.add_item(Button(label="Cancelar", custom_id="Cancel",
-                      style=discord.ButtonStyle.danger))
+        self.cancel_button=Button(label="Cancelar", custom_id="Cancel",
+                      style=discord.ButtonStyle.danger)
+        self.add_item(self.cancel_button)
 
-    async def on_select(self, interaction: discord.Interaction):
-        if interaction.custom_id == "SelectSearch":
-            selected_value = interaction.data['values'][0]
-            await interaction.message.edit(f"Seleccionaste la opción: {selected_value}")
-            await interaction.response.defer()
-            self.stop()
+        self.been_canceled = False
 
-    async def on_button_click(self, interaction: discord.Interaction):
-        if interaction.custom_id == "Cancel":
-            await interaction.message.edit("Comando cancelado.")
-            await interaction.response.defer()
-            self.stop()
+        self.select_menu.callback = self.select_callback
+        self.cancel_button.callback = self.button_callback
+
+    async def select_callback(self, interaction: discord.Interaction):
+        self.select_menu.disabled = True
+        self.cancel_button.disabled = True
+        selected_value = self.select_menu.values[0]
+        selected_value =int(selected_value)
+        selected_song = self.song_names[selected_value]
+        await interaction.response.edit_message(view=self)
+        await interaction.followup.send(f"Seleccionaste la opción: {selected_song}")
+        self.selected_value = selected_value
+        self.stop()
+    async def button_callback(self, interaction: discord.Interaction):
+        self.select_menu.disabled = True
+        self.cancel_button.disabled = True
+        await interaction.response.edit_message(view=self)
+        await interaction.followup.send("Comando cancelado.")
+        self.been_canceled = True
+        self.stop()
 
 
 class music_bot(commands.Cog):
@@ -71,7 +70,7 @@ class music_bot(commands.Cog):
             'nonplaylist': 'True'
         }
         self.FFMPEG_OPTIONS = {
-            'ffmpeg': os.getenv('FFMPEG_EXE'),
+            'ffmpeg': 'ffmpeg',
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
 
         self.embedBlue = 0x2c76dd
@@ -342,7 +341,9 @@ class music_bot(commands.Cog):
         songNames = []
         selectionOptions = []
         embedText = ""
+        id = int(ctx.guild.id)
 
+   
         if not args:
             await ctx.reply("Debe especificar la búsqueda para utilizar este comando")
             return
@@ -383,71 +384,33 @@ class music_bot(commands.Cog):
             colour=self.embedRed
         )
 
-        # view = SearchView(ctx, song_names=songNames, options=selectionOptions)
+        view = SearchView(ctx, song_names=songNames, options=selectionOptions)
 
-        view = Counter()
-
-        message = await ctx.reply(embed=searchResults, view=view)
+        await ctx.reply(embed=searchResults, view=view)
 
         await view.wait()
 
-        # try:
-        #     tasks = [
-        #         asyncio.create_task(self.bot.wait_for(
-        #             "button_click",
-        #             timeout=60.0,
-        #             check=None,
-        #         ), name="Cancelar"),
-        #         asyncio.create_task(self.bot.wait_for(
-        #             "select_option",
-        #             timeout=60.0,
-        #             check=None
-        #         ), name="SelectSearch")
-        #     ]
-        #     done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-        #     finished = list(done)[0]
+        print(view.been_canceled)
 
-        #     for task in pending:
-        #         try:
-        #             task.cancel()
-        #         except asyncio.CancelledError:
-        #             pass
+        print(view.selected_value,type(view.selected_value))
+        if view.been_canceled == True:
+            return
 
-        #     if finished == None:
-        #         searchResults.title = "Búsqueda Fallida"
-        #         searchResults.description = ""
-        #         await message.delete()
-        #         await ctx.reply(embed=searchResults)
-        #         return
+        print(view.been_canceled)
+        songRef = self.extract_YT(songTokens[view.selected_value])
+        if type(songRef) == type(True):
+            await ctx.reply("No se pudo descargar la canción. Formato incorrecto, pruebe con otras palabras clave")
+            return
 
-        #     action = finished.get_name()
+        print(len(self.musicQueue.keys()))
+        if self.musicQueue[id] == []:
+            self.musicQueue[id].append([songRef, userChannel])
+            await self.play_music(ctx=ctx)
+        
+        else:
+            self.musicQueue[id].append([songRef, userChannel])
 
-        #     if action == "button":
-        #         searchResults.title = "Búsqueda Fallida"
-        #         searchResults.description = ""
-        #         await message.delete()
-        #         await ctx.reply(embed=searchResults)
-        #     elif action == "select":
-        #         result = finished.result()
-        #         chosenIndex = int(result.values[0])
-        #         songRef = self.extract_YT(songTokens[chosenIndex])
-        #         if type(songRef) == type(True):
-        #             await ctx.reply("No se pudo descargar la canción. Formato incorrecto, pruebe con otras palabras clave")
-        #             return
-        #         embedResponse = discord.Embed(
-        #             title=f"Opción #{chosenIndex + 1} Seleccionada",
-        #             description=f"¡[{songRef['title']}]({songRef['link']}) Añadida a la lista!",
-        #             colour=self.embedRed
-        #         )
-        #         embedResponse.set_thumbnail(url=songRef['thumbnail'])
-        #         await message.delete()
-        #         await ctx.reply(embed=embedResponse)
-        #         self.musicQueue[ctx.guild.id].append([songRef, userChannel])
-        # except:
-        #     searchResults.title = "Búsqueda Fallida"
-        #     searchResults.description = ""
-        #     await message.delete()
-        #     await ctx.reply(embed=searchResults)
+
 
     @commands.command(
         name="pause",
@@ -552,7 +515,7 @@ class music_bot(commands.Cog):
                 await ctx.reply("No hay canciones en la lista")
                 return
 
-        queue = discord.Embed(
+             = discord.Embed(
             title="Current Queue",
             description=returnValue,
             colour=self.embedGreen
