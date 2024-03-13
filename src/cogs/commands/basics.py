@@ -9,7 +9,7 @@ class basics(commands.Cog):
 
     @commands.command(
         aliases=['p'],
-        description="Responde al usuario con un 'Pong', si el usario dice 'Ping'",
+        description="Responde al usuario con un 'Pong', si el usuario dice 'Ping'",
         help="NAI responde al usuario con un 'Pong!'",
         brief="NAI responde al usuario con un 'Pong!'"
     )

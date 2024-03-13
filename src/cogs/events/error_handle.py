@@ -7,9 +7,10 @@ import discord
 
 from src.llm.tools.nai_assistant.normal_response_tool import NaiAssitantAgent
 
-from  src.cogs.commands.basics import basics
+from src.cogs.commands.basics import basics
 
-class ErrorHandler(commands.Cog):
+
+class errorHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -54,15 +55,12 @@ class ErrorHandler(commands.Cog):
                 message.content = f"!{clasificated_message['response_type']}"
 
 
-                await self.bot.process_commands(message)
-
-
         elif isinstance(error, commands.MissingRequiredArgument):
-            await message.send('Falta un argumento requerido.')
+            await ctx.send('Falta un argumento requerido.')
         else:
-            await message.send('Ocurrió un error.')
+            await ctx.send('Ocurrió un error.')
             print(f'Error: {error}')
 
 
 async def setup(bot):
-    await bot.add_cog(ErrorHandler(bot=bot))
+    await bot.add_cog(errorHandler(bot=bot))
