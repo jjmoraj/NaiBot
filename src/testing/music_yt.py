@@ -56,7 +56,7 @@ class SearchView(View):
         self.stop()
 
 
-class music_bot(commands.Cog):
+class music_yt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -580,4 +580,4 @@ class music_bot(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(music_bot(bot=bot))
+    await bot.add_cog(music_yt(bot=bot))
