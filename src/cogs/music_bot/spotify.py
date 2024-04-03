@@ -262,13 +262,16 @@ class spotify(commands.Cog):
     )
     async def song_info(self, ctx, user: discord.Member = None):
         user = user or ctx.author
+        # Verificar si el usuario tiene alguna actividad de Spotify
         spotify_result = next((activity for activity in user.activities if isinstance(
             activity, discord.Spotify)), None)
+
         if spotify_result is None:
-            embed = discord.Embed(title="Ha ocurrido un error", color=0x00cc03)
+            embed = discord.Embed(
+                title="No se encontraron resultados", color=0x00cc03)
             embed.set_thumbnail(url=self.errorLogo)
-            embed.add_field(
-                name=user, value=f"{user.display_name} No esta escuchando nada")
+            embed.add_field(name=user.display_name,
+                            value=f"No está escuchando nada")
             await ctx.reply(embed=embed)
             return
 
@@ -526,8 +529,9 @@ class spotify(commands.Cog):
                 returnIndex = "Sonando"
             elif returnIndex == 1:
                 returnIndex = "Siguiente"
+
             returnValue += f"{returnIndex} - [{self.musicQueue[id][i]
-                                               [0]['title']}]({self.musicQueue[id][i][0]['link']})\n"
+                                               [0]['songName']}]({self.musicQueue[id][i][0]['songURL']})\n"
 
             if returnValue == "":
                 await ctx.reply("No hay canciones en la lista")

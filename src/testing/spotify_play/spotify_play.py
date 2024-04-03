@@ -2,7 +2,7 @@ import json
 import spotipy
 import webbrowser
 
-from play_song import reproducir_cancion
+from play_song import reproducir_audio_desde_enlace, reproducir_cancion
 
 import os
 
@@ -41,7 +41,9 @@ while True:
         # Open the Song in Web Browser
         # webbrowser.open(song)
 
-        reproducir_cancion(song, spotifyObject)
+        # reproducir_cancion(song, spotifyObject)
+        
+        reproducir_audio_desde_enlace(song)
 
         print('Song has opened in your browser.')
     elif choice == 0:

@@ -52,3 +52,21 @@ def reproducir_cancion(spotify_url, sp):
 
     # Elimina el archivo de audio una vez que la reproducción haya terminado
     os.remove('temp_audio.mp3')
+
+
+def reproducir_audio_desde_enlace(url):
+    # Inicializa pygame
+    pygame.init()
+
+    # Carga el audio desde el enlace
+    pygame.mixer.music.load(url)
+
+    # Reproduce el audio
+    pygame.mixer.music.play()
+
+    # Espera hasta que la reproducción haya terminado
+    while pygame.mixer.music.get_busy():
+        pygame.time.Clock().tick(10)  # Espera 10 milisegundos
+
+    # Cierra la sesión de pygame
+    pygame.quit()
